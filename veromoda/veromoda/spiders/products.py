@@ -1,9 +1,13 @@
+import json
+
 import scrapy
 import time
 from scrapy.utils.project import get_project_settings
 from selenium.webdriver import Chrome,ChromeOptions
 from ..items import VeromodaItem
+from ..cleaning_utils import cleaning,color_selector
 
+source = 'Veromoda'
 class ProductsSpider(scrapy.Spider):
     name = 'products'
 
@@ -37,9 +41,161 @@ class ProductsSpider(scrapy.Spider):
 
         driver.quit()
 
-
     def parse(self, response):
         item = VeromodaItem()
+
+        item['source'] = source
+
+      #  Native_product_id
+
+        try:
+            item['Category'] = response.css('.breadcrumb li:nth-child(2) a::text').extract()
+        except:
+            item['Category'] = None
+
+        try:
+            item['Subcategory1'] = response.css('.breadcrumb li:nth-child(3) a::text').extract()
+        except:
+            item['Subcategory1'] = None
+
+      #  item['Subcategory2'] =
+
+      #  item['Subcategory3'] =
+
+        try:
+            item['Title'] = response.xpath('/html/body/div[5]/div[2]/div/div[1]/div[2]/h1/text()').get()
+        except:
+            item['Title'] = None
+
+        try:
+            # take conformation
+            item['Brand'] = source
+        except:
+            item['Brand'] = source
+
+        try:
+            item['Item_url'] = response.url
+        except:
+            item['Item_url'] = None
+
+        try:
+            item['currentPrice'] = int(response.xpath('/html/body/div[5]/div[2]/div/div[1]/div[2]/ul/li[1]/h2/text()').get().replace(',',''))
+        except:
+            item['currentPrice'] = None
+
+
+        try:
+            item['originalPrice'] = int(response.xpath('//*[@id="content"]/div[1]/div[2]/ul/li[2]/span/text()').get().replace(',',''))
+        except:
+            item['originalPrice'] = None
+
+
+        try:
+            item['discount'] = response.css('.price-new.save-price ::text').extract()
+        except:
+            try:
+                item['discount'] = item['originalPrice']-item['currentPrice']
+            except:
+                item['discount'] = None
+
+
+        try:
+            item['currencyIso'] = 'INR'
+        except:
+            item['currencyIso'] = None
+
+        feature = {}
+        key = ''
+        value = ''
+        table = response.css('td::text').extract()
+        for i in range(0, len(table)):
+            if i % 2:
+                value = table[i].strip()
+            else:
+                key = table[i].strip()
+            feature[key] = value
+
+        cleaning(feature)
+
+        try:
+            item['product_detail'] = json.dumps(feature)
+        except:
+            item['product_detail'] = json.dumps({})
+
+        try:
+            item['PrimaryColor'] = color_selector(item.Title)
+        except:
+            item['PrimaryColor'] = None
+
+
+        try:
+            # same as primary since site has colors option
+            item['available_colors'] = item.PrimaryColor
+        except:
+            item['available_colors'] = None
+
+        try:
+            item['ManufacturedBy'] = feature['Name & Address of Manufacturer / Importer']
+        except:
+            item['ManufacturedBy'] = None
+
+        try:
+            item['CountryOfOrigin'] = feature['Country of Origin']
+        except:
+            item['CountryOfOrigin'] = None
+
+        try:
+            item['image_urls'] = response.xpath('//*[@id="content"]/div[1]/div[1]/div/div[1]/div/a/@href').extract()
+        except:
+            item['image_urls'] = None
+
+
+        try:
+            item['Description'] = response.xpath('//*[@id="collapse0"]/div/div/text()').extract()[0].strip()
+        except:
+            item['Description'] = ""
+
+
+        try:
+            item['fabric'] = feature['Fabric']
+        except:
+            item['fabric'] = None
+
+        try:
+            item['pattern'] = feature['Pattern']
+        except:
+            item['pattern'] = None
+
+        try:
+            item['length'] = feature['Length']
+        except:
+            item['length'] = None
+
+        try:
+            item['sleeve_styling'] = feature['Sleeve']
+        except:
+            item['sleeve_styling'] = None
+
+        try:
+            item['neck'] = feature['Neck Type']
+        except:
+            item['neck'] = None
+
+        try:
+            item['occasion'] = feature['Occasion']
+        except:
+            item['occasion'] = None
+
+        try:
+            item['fit'] = feature['Fit']
+        except:
+            item['fit'] = None
+
+
+
+
+
+        """
         item['title'] = response.xpath('/html/body/div[5]/div[2]/div/div[1]/div[2]/h1/text()').get()
         item['price'] = response.xpath('/html/body/div[5]/div[2]/div/div[1]/div[2]/ul/li[1]/h2/text()').get()
         item['old_price'] = response.xpath('//*[@id="content"]/div[1]/div[2]/ul/li[2]/span/text()').get()
@@ -54,4 +210,5 @@ class ProductsSpider(scrapy.Spider):
         item['size_table_labels'] = response.css('.pdp-sizeguide__table-head >tr > th::text').extract()
         # a = response.css('body table:nth-child(1)')[2]
         # item['product_detail'] = a.xpath('//td/text()').extract()
+        """
         yield item
