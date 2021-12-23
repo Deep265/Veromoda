@@ -123,14 +123,16 @@ class ProductsSpider(scrapy.Spider):
             item['product_detail'] = json.dumps({})
 
         try:
-            item['PrimaryColor'] = color_selector(item.Title)
+            s = response.xpath('/html/body/div[5]/div[2]/div/div[1]/div[2]/h1/text()').get()
+            item['PrimaryColor'] = color_selector(s.capitalize())
         except:
             item['PrimaryColor'] = None
 
 
         try:
             # same as primary since site has colors option
-            item['available_colors'] = item.PrimaryColor
+            s = response.xpath('/html/body/div[5]/div[2]/div/div[1]/div[2]/h1/text()').get()
+            item['available_colors'] = color_selector(s.capitalize())
         except:
             item['available_colors'] = None
 
