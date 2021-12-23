@@ -8,6 +8,8 @@ from ..items import VeromodaItem
 from ..cleaning_utils import cleaning,color_selector
 
 source = 'Veromoda'
+category = 'Women'
+subcategory1 = 'Western'
 class ProductsSpider(scrapy.Spider):
     name = 'products'
 
@@ -49,18 +51,46 @@ class ProductsSpider(scrapy.Spider):
       #  Native_product_id
 
         try:
-            item['Category'] = response.css('.breadcrumb li:nth-child(2) a::text').extract()
+            item['Category'] = category
         except:
             item['Category'] = None
 
         try:
-            item['Subcategory1'] = response.css('.breadcrumb li:nth-child(3) a::text').extract()
+            a = response.css('.breadcrumb li:nth-child(2) a::text').extract()[0]
+            b = response.css('.breadcrumb li:nth-child(3) a::text').extract()[0]
+            if a == "Accessories" or b == "Accessories":
+                item['Subcategory1'] = "Accessories"
+            else:
+                item['Subcategory1'] = subcategory1
         except:
-            item['Subcategory1'] = None
+            item['Subcategory1'] = subcategory1
 
-      #  item['Subcategory2'] =
+        try:
+            a = response.css('.breadcrumb li:nth-child(2) a::text').extract()[0]
+            if a == "Fashion":
+                try:
+                    item['Subcategory2'] = response.css('.breadcrumb li:nth-child(3) a::text').extract()
+                except:
+                    item['Subcategory2'] = None
+            else:
+                item['Subcategory2'] = response.css('.breadcrumb li:nth-child(2) a::text').extract()
+        except:
+            item['Subcategory2'] = None
 
-      #  item['Subcategory3'] =
+        try:
+            a = response.css('.breadcrumb li:nth-child(2) a::text').extract()[0]
+            if a == "Fashion":
+                try:
+                    item['Subcategory3'] = response.css('.breadcrumb li:nth-child(4) a::text').extract()
+                except:
+                    item['Subcategory3'] = None
+            else:
+                item['Subcategory3'] = response.css('.breadcrumb li:nth-child(3) a::text').extract()
+        except:
+            item['Subcategory3'] = None
+
+
+
 
         try:
             item['Title'] = response.xpath('/html/body/div[5]/div[2]/div/div[1]/div[2]/h1/text()').get()

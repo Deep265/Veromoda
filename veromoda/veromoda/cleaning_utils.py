@@ -248,11 +248,11 @@ def color_selector(string):
     for i in colors_list:
         if i in string:
             colors = i
-    return  colors
+    return colors
 
 
 
 
 
-print(color_selector('Black Woven Texture Sling Bag'.capitalize()))
+print(color_selector('Black Woven Texture Sling Bag green'.capitalize()))
 
